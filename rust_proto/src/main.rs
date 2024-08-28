@@ -15,15 +15,15 @@ use greeter::{
 /// Configure bind ports and grpc destination.
 struct Config {
     /// http port to bind to
-    #[argh(option, short = 'h')]
+    #[argh(option, short = 'h', default = "80")]
     http_port: usize,
 
     /// how high to go
-    #[argh(option, short = 'g')]
+    #[argh(option, short = 'g', default = "50051")]
     grpc_port: usize,
 
     /// an optional nickname for the pilot
-    #[argh(option, default = "\"localhost:50051\".into()")]
+    #[argh(option, default = "\"http://localhost:50051\".into()")]
     grpc_dst: String,
 }
 
@@ -37,7 +37,7 @@ impl Greeter for GreeterStruct {
         req: tonic::Request<GreetRequest>,
     ) -> Result<tonic::Response<GreetReply>, tonic::Status> {
         let name = req.into_inner().name;
-        println!("In greet(), name: {}", name);
+        log::info!("In greet(), name: {}", name);
 
         let reply = GreetReply {
             answer: format!("Hello {name}!"),
@@ -50,6 +50,9 @@ impl Greeter for GreeterStruct {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let cfg: Config = argh::from_env();
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .init();
     let greeter = GreeterServer::new(GreeterStruct);
     let http_addr: SocketAddr = format!("[::]:{}", cfg.http_port).parse()?;
     let grpc_addr: SocketAddr = format!("[::]:{}", cfg.grpc_port).parse()?;
@@ -73,7 +76,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn web_root(State(cfg): State<Config>) -> Result<String, String> {
-    let mut client = GreeterClient::connect(format!("http://{}", cfg.grpc_dst))
+    let mut client = GreeterClient::connect(cfg.grpc_dst)
         .await
         .map_err(|_| "error connecting".to_owned())?;
     let request = tonic::Request::new(GreetRequest {

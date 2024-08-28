@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	grpc_port = flag.Int("port_grpc", 50051, "The grpc server port")
-	http_port = flag.Int("port_http", 50054, "The http server port")
-	grpc_dst  = flag.String("grpc_dst", "localhost:50053", "Destination grpc server to call")
+	grpc_port = flag.Int("grpc_port", 50051, "The grpc server port")
+	http_port = flag.Int("http_port", 80, "The http server port")
+	grpc_dst  = flag.String("grpc_dst", "http://localhost:50051", "Destination grpc server to call")
 )
 
 // server is used to implement helloworld.GreeterServer.
@@ -53,6 +53,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
+	log.SetFlags(log.Ldate | log.Ltime)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *grpc_port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

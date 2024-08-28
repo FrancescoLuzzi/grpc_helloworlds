@@ -27,3 +27,9 @@ docker build . -f go_proto/Dockerfile -t proto:go
 ```shell
 docker build . -f rust_proto/Dockerfile -t proto:rust
 ```
+
+## Run demo
+
+```shell
+docker compose up --force-recreate --build
+```

@@ -1,0 +1,16 @@
+---
+services:
+  rust:
+    build:
+      dockerfile: rust_proto/Dockerfile
+      context: .
+    ports:
+      - 80:80
+    command: --http-port 80 --grpc-port 50051 --grpc-dst http://go:50051
+  go:
+    build:
+      dockerfile: go_proto/Dockerfile
+      context: .
+    ports:
+      - 81:80
+    command: -http_port 80 -grpc_port 50051 -grpc_dst http://rust:50051
