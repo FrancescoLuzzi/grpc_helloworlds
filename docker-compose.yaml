@@ -1,16 +1,49 @@
 ---
 services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      # Mount the Docker socket to allow Traefik to listen for Docker events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.api.service=api@internal"
+    restart: unless-stopped
+
   rust:
     build:
       dockerfile: rust_proto/Dockerfile
       context: .
-    ports:
-      - 80:80
     command: --http-port 80 --grpc-port 50051 --grpc-dst http://go:50051
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rust.rule=Host(`localhost`) && PathPrefix(`/rust`)"
+      - "traefik.http.routers.rust.entrypoints=web"
+      - "traefik.http.services.rust.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.rust-stripprefix.stripprefix.prefixes=/rust"
+      - "traefik.http.routers.rust.middlewares=rust-stripprefix"
+
   go:
     build:
       dockerfile: go_proto/Dockerfile
       context: .
-    ports:
-      - 81:80
-    command: -http_port 80 -grpc_port 50051 -grpc_dst http://rust:50051
+    command: -http_port 80 -grpc_port 50051 -grpc_dst rust:50051
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.go.rule=Host(`localhost`) && PathPrefix(`/go`)"
+      - "traefik.http.routers.go.entrypoints=web"
+      - "traefik.http.services.go.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.go-stripprefix.stripprefix.prefixes=/go"
+      - "traefik.http.routers.go.middlewares=go-stripprefix"
