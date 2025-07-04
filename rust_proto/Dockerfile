@@ -1,4 +1,4 @@
-FROM rust:1.80-alpine3.20 as chef
+FROM rust:1.88-alpine3.22 as chef
 WORKDIR /app
 RUN apk add protoc musl-dev --no-cache && \
     cargo install cargo-chef
@@ -17,9 +17,8 @@ COPY proto/greeter.proto .
 # Build our project
 RUN cargo build --release --features dockerproto
 
-FROM alpine:3.20 AS runtime
+FROM alpine:3.22 AS runtime
 WORKDIR /app
-RUN apk add --no-cache openssl ca-certificates
+# RUN apk add --no-cache openssl ca-certificates
 COPY --from=builder /app/target/release/rust_proto rust_proto
 ENTRYPOINT ["./rust_proto"]
-

@@ -40,7 +40,7 @@ impl Greeter for GreeterStruct {
         log::info!("In greet(), name: {}", name);
 
         let reply = GreetReply {
-            answer: format!("Hello {name}!"),
+            answer: format!("Hello {name}, i'm rust grpc!"),
         };
 
         Ok(tonic::Response::new(reply))
