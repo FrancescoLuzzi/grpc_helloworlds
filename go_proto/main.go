@@ -32,7 +32,7 @@ type server struct {
 // SayHello implements helloworld.GreeterServer
 func (s *server) Greet(ctx context.Context, in *pb.GreetRequest) (*pb.GreetReply, error) {
 	log.Printf("Received: %v", in.GetName())
-	return &pb.GreetReply{Answer: "Hello " + in.GetName()}, nil
+	return &pb.GreetReply{Answer: fmt.Sprintf("Hello %s, i'm golang grpc!", in.GetName())}, nil
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,8 +42,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := pb.NewGreeterClient(conn)
-	ctx := context.Background()
-	ret, err := client.Greet(ctx, &pb.GreetRequest{Name: "Hello from Golang"})
+	ret, err := client.Greet(r.Context(), &pb.GreetRequest{Name: "Hello from Golang"})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error when requesting: %v", err), 500)
 		return
